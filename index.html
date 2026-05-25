@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Boys State Quiz">
 <title>Boys State Quiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0c10;
@@ -51,6 +51,19 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 .question-label { text-align: center; color: var(--muted2); font-size: 14px; margin-bottom: 6px; }
 .result-msg { text-align: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; min-height: 28px; margin-bottom: 14px; }
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.choices.single-col { grid-template-columns: 1fr; }
+.quiz-settings { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.setting-group { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+.setting-label { font-size: 12px; color: var(--muted); font-family: 'Syne', sans-serif; letter-spacing: 0.3px; }
+.count-btn { background: none; border: none; color: var(--muted2); font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1; }
+.count-btn:active { color: var(--accent); }
+.count-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); min-width: 16px; text-align: center; }
+.practice-toggle { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; cursor: pointer; user-select: none; }
+.practice-toggle.on { background: rgba(167,139,250,0.12); border-color: rgba(167,139,250,0.4); }
+.practice-toggle .pt-label { font-size: 12px; color: var(--muted); font-family: 'Syne', sans-serif; }
+.practice-toggle.on .pt-label { color: #a78bfa; }
+.practice-pill { font-size: 10px; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 6px; background: var(--surface); color: var(--muted); }
+.practice-toggle.on .practice-pill { background: #a78bfa; color: #fff; }
 .choice-btn { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 14px 10px; cursor: pointer; text-align: center; line-height: 1.3; transition: background 0.15s, border-color 0.15s, transform 0.1s; -webkit-user-select: none; }
 .choice-btn:active { transform: scale(0.96); }
 .choice-btn.correct { background: rgba(52,211,153,0.15); border-color: var(--green); color: var(--green); }
@@ -113,9 +126,9 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 .msg.err { color: var(--red); }
 
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
-.stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; }
-.stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 14px; text-align: center; }
+.stat-num { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 52px; line-height: 1; letter-spacing: 2px; }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.8px; font-family: 'Syne', sans-serif; }
 .hard-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .hard-row:last-child { border-bottom: none; }
 .pct-badge { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
@@ -124,6 +137,29 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 .reset-btn { width: 100%; background: none; border: 1px solid rgba(248,113,113,0.3); border-radius: 12px; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px; cursor: pointer; margin-top: 12px; }
 
 .party-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+/* Flashcard */
+.flash-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  overflow: hidden; margin-bottom: 16px; cursor: pointer;
+  transition: transform 0.15s; user-select: none;
+}
+.flash-card:active { transform: scale(0.98); }
+.flash-photo { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: var(--surface2); }
+.flash-photo-placeholder { width: 100%; aspect-ratio: 3/4; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 80px; }
+.flash-reveal { padding: 16px; text-align: center; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.flash-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; }
+.flash-meta { font-size: 13px; color: var(--muted2); }
+.flash-tap-hint { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 8px; }
+.flash-nav { display: flex; gap: 10px; }
+.flash-prev, .flash-next { flex: 1; padding: 13px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface2); color: var(--text); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; cursor: pointer; transition: background 0.15s; }
+.flash-next { background: var(--accent); border-color: var(--accent); color: #fff; }
+.flash-prev:active { background: var(--surface); }
+.flash-next:active { opacity: 0.85; }
+.flash-counter { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 12px; font-family: 'Syne', sans-serif; }
+.flash-filter { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.flash-filter-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface2); color: var(--muted2); font-size: 12px; font-family: 'Syne', sans-serif; cursor: pointer; }
+.flash-filter-btn.active { border-color: var(--accent); background: rgba(79,142,247,0.12); color: var(--accent); font-weight: 600; }
+.flash-shuffle-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface2); color: var(--muted2); font-size: 12px; font-family: 'Syne', sans-serif; cursor: pointer; margin-left: auto; }
 .party-btn { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface2); color: var(--muted2); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.15s; }
 .party-btn.active { border-color: var(--accent); background: rgba(79,142,247,0.12); color: var(--accent); font-weight: 600; }
 
@@ -181,6 +217,11 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
     <button class="reset-btn" onclick="resetStats()">Reset stats</button>
   </div>
 
+  <!-- FLASHCARDS -->
+  <div class="screen" id="screen-flash">
+    <div id="flash-body"></div>
+  </div>
+
   <!-- EDIT MODAL -->
   <div class="modal-overlay" id="edit-modal" onclick="closeEdit(event)">
     <div class="modal-sheet">
@@ -216,6 +257,10 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
     <button class="nav-btn active" data-tab="quiz" onclick="showTab('quiz')">
       <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 1 1 0 14A7 7 0 0 1 12 2z"/><path d="M12 22v-4"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 3-2.5 5"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
       Quiz
+    </button>
+    <button class="nav-btn" data-tab="flash" onclick="showTab('flash')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+      Cards
     </button>
     <button class="nav-btn" data-tab="delegates" onclick="showTab('delegates')">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
@@ -307,6 +352,7 @@ function showTab(tab) {
   document.getElementById('screen-' + tab).classList.add('active');
   document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
   if (tab === 'quiz') renderQuiz();
+  if (tab === 'flash') renderFlash();
   if (tab === 'delegates') renderDelegates();
   if (tab === 'stats') renderStats();
 }
@@ -325,9 +371,28 @@ function renderQuiz() {
   generateQuestion();
 }
 
+var choiceCount = 4;
+var practiceMode = false;
+
+function setChoiceCount(delta) {
+  choiceCount = Math.min(6, Math.max(2, choiceCount + delta));
+  // cap to available delegates
+  choiceCount = Math.min(choiceCount, delegates.length);
+  document.getElementById('choice-count-val').textContent = choiceCount;
+  generateQuestion();
+}
+
+function togglePractice() {
+  practiceMode = !practiceMode;
+  var el = document.getElementById('practice-toggle');
+  el.classList.toggle('on', practiceMode);
+  generateQuestion();
+}
+
 function generateQuestion() {
   answered = false;
   var pool = delegates.slice();
+  var numChoices = Math.min(choiceCount, pool.length);
   var weights = pool.map(function(d) {
     var p = stats.perPerson[d.id];
     if (!p || p.asked === 0) return 3;
@@ -338,7 +403,7 @@ function generateQuestion() {
   var r = Math.random() * total, cum = 0, idx = 0;
   for (var i = 0; i < weights.length; i++) { cum += weights[i]; if (r <= cum) { idx = i; break; } }
   var correct = pool[idx];
-  var wrong = shuffle(pool.filter(function(d){return d.id!==correct.id;})).slice(0,3);
+  var wrong = shuffle(pool.filter(function(d){return d.id!==correct.id;})).slice(0, numChoices - 1);
   var choices = shuffle(wrong.concat([correct]));
   currentQ = { correct: correct, choices: choices };
   renderQuestion();
@@ -350,14 +415,30 @@ function renderQuestion() {
   var photoHTML = q.correct.photo
     ? '<img src="' + q.correct.photo + '" alt="Delegate photo">'
     : '<span class="no-photo">👤</span>';
+  var numChoices = q.choices.length;
+  var gridClass = numChoices <= 3 ? 'choices single-col pop' : 'choices pop';
   var choicesHTML = q.choices.map(function(c) {
     return '<button class="choice-btn" id="btn-' + c.id + '" onclick="answer(\'' + c.id + '\')">' + esc(c.name) + '</button>';
   }).join('');
   var pct = stats.asked > 0 ? Math.min(100, Math.round(stats.correct / stats.asked * 100)) : 0;
+  var cappedCount = Math.min(choiceCount, delegates.length);
   el.innerHTML =
-    '<div style="text-align:center;margin-bottom:20px;padding-top:4px">' +
+    '<div style="text-align:center;margin-bottom:16px;padding-top:4px">' +
       '<div class="syne" style="font-weight:800;font-size:20px;letter-spacing:-0.3px">Arkansas Boys State 2026</div>' +
       '<div style="font-family:\'Syne\',sans-serif;font-size:11px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px">Rooks County</div>' +
+    '</div>' +
+    '<div class="quiz-settings">' +
+      '<div class="setting-group">' +
+        '<span class="setting-label">Choices</span>' +
+        '<button class="count-btn" onclick="setChoiceCount(-1)">−</button>' +
+        '<span class="count-val" id="choice-count-val">' + cappedCount + '</span>' +
+        '<button class="count-btn" onclick="setChoiceCount(1)">+</button>' +
+      '</div>' +
+      '<div class="practice-toggle' + (practiceMode ? ' on' : '') + '" id="practice-toggle" onclick="togglePractice()">' +
+        '<span class="pt-label">Practice</span>' +
+        '<span class="practice-pill">' + (practiceMode ? 'ON' : 'OFF') + '</span>' +
+      '</div>' +
+      (practiceMode ? '<span style="font-size:11px;color:#a78bfa;font-family:\'Syne\',sans-serif">stats paused</span>' : '') +
     '</div>' +
     '<div class="quiz-header">' +
       '<div class="syne" style="font-weight:700;font-size:15px;color:var(--muted2)">' +
@@ -369,7 +450,7 @@ function renderQuestion() {
     '<div class="photo-frame pop">' + photoHTML + '</div>' +
     '<div class="question-label">Who is this?</div>' +
     '<div class="result-msg" id="result-msg"></div>' +
-    '<div class="choices pop">' + choicesHTML + '</div>' +
+    '<div class="' + gridClass + '">' + choicesHTML + '</div>' +
     '<button class="skip-btn" onclick="generateQuestion()">Skip</button>';
 }
 
@@ -378,12 +459,14 @@ function answer(id) {
   answered = true;
   var q = currentQ;
   var isCorrect = id === q.correct.id;
-  stats.asked++;
-  if (!stats.perPerson[q.correct.id]) stats.perPerson[q.correct.id] = { asked: 0, correct: 0 };
-  stats.perPerson[q.correct.id].asked++;
-  if (isCorrect) { stats.correct++; stats.perPerson[q.correct.id].correct++; streak++; }
-  else { streak = 0; }
-  saveStats();
+  if (!practiceMode) {
+    stats.asked++;
+    if (!stats.perPerson[q.correct.id]) stats.perPerson[q.correct.id] = { asked: 0, correct: 0 };
+    stats.perPerson[q.correct.id].asked++;
+    if (isCorrect) { stats.correct++; stats.perPerson[q.correct.id].correct++; streak++; }
+    else { streak = 0; }
+    saveStats();
+  }
   q.choices.forEach(function(c) {
     var btn = document.getElementById('btn-' + c.id);
     if (!btn) return;
@@ -571,6 +654,107 @@ function shuffle(arr) {
 }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Flashcards ─────────────────────────────────────
+var flashDeck = [];
+var flashIdx = 0;
+var flashRevealed = false;
+var flashFilter = 'All';
+
+function renderFlash() {
+  var el = document.getElementById('flash-body');
+  if (delegates.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🃏</div><p>Add delegates first to use flashcards.</p><button class="goto-btn" onclick="showTab(\'add\')">Add delegates</button></div>';
+    return;
+  }
+  // Build filter options from offices
+  var offices = ['All'];
+  delegates.forEach(function(d) { var o = d.role && d.role.trim() ? d.role.trim() : 'No Office'; if (offices.indexOf(o) === -1) offices.push(o); });
+  // Rebuild deck if filter changed or deck empty
+  buildFlashDeck();
+  renderFlashCard(el, offices);
+}
+
+function buildFlashDeck() {
+  var pool = delegates.filter(function(d) {
+    if (flashFilter === 'All') return true;
+    var o = d.role && d.role.trim() ? d.role.trim() : 'No Office';
+    return o === flashFilter;
+  });
+  flashDeck = shuffle(pool);
+  flashIdx = 0;
+  flashRevealed = false;
+}
+
+function renderFlashCard(el, offices) {
+  if (!el) el = document.getElementById('flash-body');
+  if (!offices) {
+    offices = ['All'];
+    delegates.forEach(function(d) { var o = d.role && d.role.trim() ? d.role.trim() : 'No Office'; if (offices.indexOf(o) === -1) offices.push(o); });
+  }
+  if (flashDeck.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>No delegates in this group.</p></div>';
+    return;
+  }
+  var d = flashDeck[flashIdx];
+  var filterHTML = offices.map(function(o) {
+    return '<button class="flash-filter-btn' + (flashFilter === o ? ' active' : '') + '" onclick="setFlashFilter(\'' + o.replace(/'/g,"\\'") + '\')">' + esc(o) + '</button>';
+  }).join('') + '<button class="flash-shuffle-btn" onclick="reshuffleDeck()">🔀 Shuffle</button>';
+  var photoHTML = d.photo
+    ? '<img class="flash-photo" src="' + d.photo + '" alt="' + esc(d.name) + '">'
+    : '<div class="flash-photo-placeholder">👤</div>';
+  var revealHTML = flashRevealed
+    ? '<div class="flash-reveal">' +
+        '<div class="flash-name">' + esc(d.name) + '</div>' +
+        '<div class="flash-meta">' + [d.role, d.city, d.party].filter(Boolean).map(esc).join(' · ') + '</div>' +
+      '</div>'
+    : '<div class="flash-reveal" onclick="revealFlash()" style="cursor:pointer">' +
+        '<div style="font-size:13px;color:var(--muted)">Tap to reveal name</div>' +
+      '</div>';
+  var prevDisabled = flashIdx === 0 ? 'disabled style="opacity:0.4"' : '';
+  el.innerHTML =
+    '<div style="text-align:center;margin-bottom:14px;padding-top:4px">' +
+      '<div class="syne" style="font-weight:800;font-size:20px;letter-spacing:-0.3px">Arkansas Boys State 2026</div>' +
+      '<div style="font-family:\'Syne\',sans-serif;font-size:11px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px">Rooks County</div>' +
+    '</div>' +
+    '<div class="flash-filter">' + filterHTML + '</div>' +
+    '<div class="flash-counter">' + (flashIdx + 1) + ' / ' + flashDeck.length + '</div>' +
+    '<div class="flash-card" onclick="revealFlash()">' +
+      photoHTML + revealHTML +
+    '</div>' +
+    '<div class="flash-nav">' +
+      '<button class="flash-prev" onclick="flashMove(-1)" ' + prevDisabled + '>← Prev</button>' +
+      '<button class="flash-next" onclick="flashMove(1)">' + (flashIdx === flashDeck.length - 1 ? 'Done ✓' : 'Next →') + '</button>' +
+    '</div>';
+}
+
+function revealFlash() {
+  if (flashRevealed) return;
+  flashRevealed = true;
+  renderFlashCard();
+}
+
+function flashMove(dir) {
+  if (dir === 1 && flashIdx === flashDeck.length - 1) {
+    // Done — reshuffle and restart
+    reshuffleDeck();
+    return;
+  }
+  flashIdx = Math.max(0, Math.min(flashDeck.length - 1, flashIdx + dir));
+  flashRevealed = false;
+  renderFlashCard();
+}
+
+function setFlashFilter(f) {
+  flashFilter = f;
+  buildFlashDeck();
+  renderFlashCard();
+}
+
+function reshuffleDeck() {
+  buildFlashDeck();
+  renderFlashCard();
 }
 
 // ── Edit ───────────────────────────────────────────
