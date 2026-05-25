@@ -68,15 +68,21 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 
 .screen-header { margin-bottom: 16px; }
 .delegate-count { color: var(--muted); font-size: 13px; margin-top: 2px; }
-.delegate-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.office-group { margin-bottom: 18px; }
+.office-header { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(79,142,247,0.2); }
+.delegate-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .delegate-item:last-child { border-bottom: none; }
-.mini-avatar { width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); }
-.mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.delegate-avatar { width: 56px; height: 56px; border-radius: 28px; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--muted); }
+.delegate-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .delegate-info { flex: 1; min-width: 0; }
-.delegate-name { font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.delegate-meta { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.delegate-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.delegate-detail { font-size: 12px; color: var(--muted2); margin-top: 2px; }
+.delegate-detail span { display: inline-block; margin-right: 8px; }
+.delegate-detail .detail-icon { margin-right: 3px; }
 .del-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 8px; font-size: 18px; border-radius: 8px; }
 .del-btn:active { color: var(--red); }
+.mini-avatar { width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); }
+.mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; margin-bottom: 16px; transition: border-color 0.2s; }
 .upload-area:active { border-color: var(--accent); }
@@ -104,8 +110,9 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 .pct-ok { background: rgba(52,211,153,0.15); color: var(--green); }
 .reset-btn { width: 100%; background: none; border: 1px solid rgba(248,113,113,0.3); border-radius: 12px; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px; cursor: pointer; margin-top: 12px; }
 
-.db-status { font-size: 12px; color: var(--muted); text-align: center; padding: 8px; }
-.db-status.err { color: var(--red); }
+.party-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.party-btn { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface2); color: var(--muted2); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.party-btn.active { border-color: var(--accent); background: rgba(79,142,247,0.12); color: var(--accent); font-weight: 600; }
 
 @keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .pop { animation: popIn 0.2s ease; }
@@ -119,7 +126,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 
   <div class="screen" id="screen-delegates">
     <div class="screen-header"><h2 class="syne">Delegates</h2><div class="delegate-count" id="del-count"></div></div>
-    <div class="card"><div id="delegate-list"></div></div>
+    <div id="delegate-list"></div>
   </div>
 
   <div class="screen" id="screen-add">
@@ -132,12 +139,16 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
     <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none">
     <div class="field-label">Full name *</div>
     <input class="field" id="add-name" type="text" placeholder="e.g. John Smith" autocomplete="off">
-    <div class="field-label">City / county</div>
-    <input class="field" id="add-city" type="text" placeholder="e.g. Conway" autocomplete="off">
+    <div class="field-label">County</div>
+    <input class="field" id="add-city" type="text" value="Rooks County" autocomplete="off">
     <div class="field-label">Role / office</div>
     <input class="field" id="add-role" type="text" placeholder="e.g. Governor" autocomplete="off">
     <div class="field-label">Party</div>
-    <input class="field" id="add-party" type="text" placeholder="e.g. Federalist" autocomplete="off">
+    <div class="party-toggle" id="party-toggle">
+      <button type="button" class="party-btn active" data-party="Federalist" onclick="selectParty('Federalist')">Federalist</button>
+      <button type="button" class="party-btn" data-party="Nationalist" onclick="selectParty('Nationalist')">Nationalist</button>
+      <button type="button" class="party-btn" data-party="" onclick="selectParty('')">None</button>
+    </div>
     <button class="add-btn" onclick="addDelegate()">Add delegate</button>
     <div class="msg" id="add-msg"></div>
   </div>
@@ -261,7 +272,8 @@ function renderQuiz() {
   var el = document.getElementById('quiz-body');
   if (delegates.length < 2) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏛️</div>' +
-      '<h2 class="syne" style="margin-bottom:8px">Arkansas Boys State 2026</h2>' +
+      '<h2 class="syne" style="margin-bottom:4px">Arkansas Boys State 2026</h2>' +
+      '<div style="font-family:\'Syne\',sans-serif;font-size:14px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">Rooks County</div>' +
       '<p>Add at least 2 delegates to start drilling names and faces.</p>' +
       '<button class="goto-btn" onclick="showTab(\'add\')">Add delegates</button></div>';
     return;
@@ -354,16 +366,46 @@ function renderDelegates() {
     el.innerHTML = '<div class="empty-state" style="padding:24px 0"><p>No delegates yet.</p></div>';
     return;
   }
-  el.innerHTML = delegates.map(function(d) {
-    var av = d.photo ? '<img src="' + d.photo + '" alt="">' : '👤';
-    var meta = [d.city, d.role, d.party].filter(Boolean).join(' · ');
-    return '<div class="delegate-item">' +
-      '<div class="mini-avatar">' + av + '</div>' +
-      '<div class="delegate-info">' +
-        '<div class="delegate-name">' + esc(d.name) + '</div>' +
-        (meta ? '<div class="delegate-meta">' + esc(meta) + '</div>' : '') +
-      '</div>' +
-      '<button class="del-btn" onclick="removeDelegate(\'' + d.id + '\')" aria-label="Delete">✕</button>' +
+
+  // Group by role/office; blank role goes to "No Office"
+  var groups = {};
+  delegates.forEach(function(d) {
+    var key = d.role && d.role.trim() ? d.role.trim() : 'No Office';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(d);
+  });
+
+  // Sort group names alphabetically, but put "No Office" last
+  var keys = Object.keys(groups).sort(function(a, b) {
+    if (a === 'No Office') return 1;
+    if (b === 'No Office') return -1;
+    return a.localeCompare(b);
+  });
+
+  el.innerHTML = keys.map(function(key) {
+    var items = groups[key].sort(function(a,b){return a.name.localeCompare(b.name);});
+    var rows = items.map(function(d) {
+      var av = d.photo ? '<img src="' + d.photo + '" alt="">' : '👤';
+      var details = '';
+      if (d.city) details += '<span><span class="detail-icon">📍</span>' + esc(d.city) + '</span>';
+      if (d.party) details += '<span><span class="detail-icon">🏛</span>' + esc(d.party) + '</span>';
+      var p = stats.perPerson[d.id];
+      if (p && p.asked >= 2) {
+        var pct = Math.round(p.correct / p.asked * 100);
+        details += '<span style="color:' + (pct >= 70 ? 'var(--green)' : 'var(--red)') + '">' + pct + '% quiz</span>';
+      }
+      return '<div class="delegate-item">' +
+        '<div class="delegate-avatar">' + av + '</div>' +
+        '<div class="delegate-info">' +
+          '<div class="delegate-name">' + esc(d.name) + '</div>' +
+          (details ? '<div class="delegate-detail">' + details + '</div>' : '') +
+        '</div>' +
+        '<button class="del-btn" onclick="removeDelegate(\'' + d.id + '\')" aria-label="Delete">✕</button>' +
+      '</div>';
+    }).join('');
+    return '<div class="office-group card">' +
+      '<div class="office-header">' + esc(key) + ' <span style="opacity:0.5;font-weight:400">(' + items.length + ')</span></div>' +
+      rows +
     '</div>';
   }).join('');
 }
@@ -403,6 +445,14 @@ document.getElementById('photo-input').addEventListener('change', function(e) {
   reader.readAsDataURL(file);
 });
 
+var selectedParty = 'Federalist';
+function selectParty(p) {
+  selectedParty = p;
+  document.querySelectorAll('.party-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.party === p);
+  });
+}
+
 function addDelegate() {
   var name = document.getElementById('add-name').value.trim();
   var msg = document.getElementById('add-msg');
@@ -412,7 +462,7 @@ function addDelegate() {
     name: name,
     city: document.getElementById('add-city').value.trim(),
     role: document.getElementById('add-role').value.trim(),
-    party: document.getElementById('add-party').value.trim(),
+    party: selectedParty,
     photo: pendingPhoto
   };
   saveDelegate(d, function(err) {
@@ -420,9 +470,9 @@ function addDelegate() {
     delegates.push(d);
     delegates.sort(function(a,b){return a.name.localeCompare(b.name);});
     document.getElementById('add-name').value = '';
-    document.getElementById('add-city').value = '';
+    document.getElementById('add-city').value = 'Rooks County';
     document.getElementById('add-role').value = '';
-    document.getElementById('add-party').value = '';
+    selectParty('Federalist');
     var prev = document.getElementById('photo-preview');
     prev.style.display = 'none'; prev.src = '';
     document.getElementById('photo-input').value = '';
