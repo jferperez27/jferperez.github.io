@@ -478,15 +478,29 @@ function answer(id) {
   if (isCorrect) {
     msg.style.color = 'var(--green)';
     msg.textContent = streak > 2 ? '🔥 Correct!' : 'Correct!';
+    var countdown = 3;
+    var indicator = document.createElement('div');
+    indicator.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);margin-top:10px;font-family:\'Syne\',sans-serif;';
+    indicator.textContent = 'Next in ' + countdown + '…';
+    document.getElementById('quiz-body').appendChild(indicator);
+    var timer = setInterval(function() {
+      countdown--;
+      if (countdown <= 0) {
+        clearInterval(timer);
+        generateQuestion();
+      } else {
+        if (indicator.parentNode) indicator.textContent = 'Next in ' + countdown + '…';
+      }
+    }, 400);
   } else {
     msg.style.color = 'var(--red)';
     var ans = delegates.find(function(d){return d.id===q.correct.id;});
     msg.textContent = "That's " + ans.name;
     document.querySelector('.choices').classList.add('shake');
+    var nb = document.createElement('button');
+    nb.className = 'next-btn'; nb.style.marginTop = '10px'; nb.textContent = 'Next →'; nb.onclick = generateQuestion;
+    document.getElementById('quiz-body').appendChild(nb);
   }
-  var nb = document.createElement('button');
-  nb.className = 'next-btn'; nb.textContent = 'Next →'; nb.onclick = generateQuestion;
-  document.getElementById('quiz-body').appendChild(nb);
 }
 
 // ── Delegates ──────────────────────────────────────
