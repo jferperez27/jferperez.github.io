@@ -81,8 +81,21 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
 .delegate-detail .detail-icon { margin-right: 3px; }
 .del-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 8px; font-size: 18px; border-radius: 8px; }
 .del-btn:active { color: var(--red); }
+.edit-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 8px; font-size: 16px; border-radius: 8px; }
+.edit-btn:active { color: var(--accent); }
 .mini-avatar { width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); }
 .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Edit modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal-sheet { background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 16px 32px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+.modal-save { flex: 1; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; padding: 14px; cursor: pointer; }
+.modal-cancel { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; color: var(--muted2); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 14px 18px; cursor: pointer; }
 
 .upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; margin-bottom: 16px; transition: border-color 0.2s; }
 .upload-area:active { border-color: var(--accent); }
@@ -166,6 +179,37 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
       <div id="hard-list"></div>
     </div>
     <button class="reset-btn" onclick="resetStats()">Reset stats</button>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div class="modal-overlay" id="edit-modal" onclick="closeEdit(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Edit delegate</div>
+      <div class="upload-area" id="edit-upload-area" onclick="document.getElementById('edit-photo-input').click()">
+        <svg id="edit-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/><path d="M19 8h2m-1-1v2"/></svg>
+        <p id="edit-upload-label">Tap to change photo</p>
+        <img id="edit-photo-preview" class="preview-img" style="display:none" alt="Preview">
+      </div>
+      <input type="file" id="edit-photo-input" accept="image/*" capture="environment" style="display:none">
+      <div class="field-label">Full name *</div>
+      <input class="field" id="edit-name" type="text" autocomplete="off">
+      <div class="field-label">County</div>
+      <input class="field" id="edit-city" type="text" autocomplete="off">
+      <div class="field-label">Role / office</div>
+      <input class="field" id="edit-role" type="text" placeholder="e.g. Governor" autocomplete="off">
+      <div class="field-label">Party</div>
+      <div class="party-toggle" id="edit-party-toggle">
+        <button type="button" class="party-btn" data-party="Federalist" onclick="selectEditParty('Federalist')">Federalist</button>
+        <button type="button" class="party-btn" data-party="Nationalist" onclick="selectEditParty('Nationalist')">Nationalist</button>
+        <button type="button" class="party-btn" data-party="" onclick="selectEditParty('')">None</button>
+      </div>
+      <div class="msg" id="edit-msg"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeEdit(null)">Cancel</button>
+        <button class="modal-save" onclick="saveEdit()">Save changes</button>
+      </div>
+    </div>
   </div>
 
   <nav class="bottom-nav">
@@ -311,6 +355,10 @@ function renderQuestion() {
   }).join('');
   var pct = stats.asked > 0 ? Math.min(100, Math.round(stats.correct / stats.asked * 100)) : 0;
   el.innerHTML =
+    '<div style="text-align:center;margin-bottom:20px;padding-top:4px">' +
+      '<div class="syne" style="font-weight:800;font-size:20px;letter-spacing:-0.3px">Arkansas Boys State 2026</div>' +
+      '<div style="font-family:\'Syne\',sans-serif;font-size:11px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px">Rooks County</div>' +
+    '</div>' +
     '<div class="quiz-header">' +
       '<div class="syne" style="font-weight:700;font-size:15px;color:var(--muted2)">' +
         (stats.asked > 0 ? stats.asked + ' asked' : 'Ready?') + '</div>' +
@@ -400,6 +448,7 @@ function renderDelegates() {
           '<div class="delegate-name">' + esc(d.name) + '</div>' +
           (details ? '<div class="delegate-detail">' + details + '</div>' : '') +
         '</div>' +
+      '<button class="edit-btn" onclick="openEdit(\'' + d.id + '\')" aria-label="Edit">✎</button>' +
         '<button class="del-btn" onclick="removeDelegate(\'' + d.id + '\')" aria-label="Delete">✕</button>' +
       '</div>';
     }).join('');
@@ -522,6 +571,97 @@ function shuffle(arr) {
 }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Edit ───────────────────────────────────────────
+var editingId = null;
+var editPendingPhoto = null; // null = unchanged, '' = cleared, string = new photo
+
+function openEdit(id) {
+  var d = delegates.find(function(d){ return d.id === id; });
+  if (!d) return;
+  editingId = id;
+  editPendingPhoto = null;
+  document.getElementById('edit-name').value = d.name;
+  document.getElementById('edit-city').value = d.city || 'Rooks County';
+  document.getElementById('edit-role').value = d.role || '';
+  selectEditParty(d.party || '');
+  var prev = document.getElementById('edit-photo-preview');
+  if (d.photo) {
+    prev.src = d.photo; prev.style.display = 'block';
+    document.getElementById('edit-upload-icon').style.display = 'none';
+    document.getElementById('edit-upload-label').textContent = 'Tap to change photo';
+  } else {
+    prev.style.display = 'none'; prev.src = '';
+    document.getElementById('edit-upload-icon').style.display = '';
+    document.getElementById('edit-upload-label').textContent = 'Tap to change photo';
+  }
+  document.getElementById('edit-msg').textContent = '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEdit(e) {
+  if (e && e.target !== document.getElementById('edit-modal')) return;
+  document.getElementById('edit-modal').classList.remove('open');
+  editingId = null;
+}
+
+function selectEditParty(p) {
+  document.querySelectorAll('#edit-party-toggle .party-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.party === p);
+  });
+  // store selection on the toggle element
+  document.getElementById('edit-party-toggle').dataset.selected = p;
+}
+
+document.getElementById('edit-photo-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image();
+    img.onload = function() {
+      var max = 500;
+      var w = img.width, h = img.height;
+      if (w > max || h > max) { var sc = Math.min(max/w, max/h); w = Math.round(w*sc); h = Math.round(h*sc); }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      editPendingPhoto = canvas.toDataURL('image/jpeg', 0.82);
+      var prev = document.getElementById('edit-photo-preview');
+      prev.src = editPendingPhoto; prev.style.display = 'block';
+      document.getElementById('edit-upload-icon').style.display = 'none';
+      document.getElementById('edit-upload-label').textContent = 'Tap to change photo';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function saveEdit() {
+  if (!editingId) return;
+  var name = document.getElementById('edit-name').value.trim();
+  var msg = document.getElementById('edit-msg');
+  if (!name) { msg.className = 'msg err'; msg.textContent = 'Name is required.'; return; }
+  var idx = delegates.findIndex(function(d){ return d.id === editingId; });
+  if (idx === -1) return;
+  var existing = delegates[idx];
+  var updated = {
+    id: existing.id,
+    name: name,
+    city: document.getElementById('edit-city').value.trim(),
+    role: document.getElementById('edit-role').value.trim(),
+    party: document.getElementById('edit-party-toggle').dataset.selected || '',
+    photo: editPendingPhoto !== null ? editPendingPhoto : existing.photo
+  };
+  saveDelegate(updated, function(err) {
+    if (err) { msg.className = 'msg err'; msg.textContent = 'Error saving.'; return; }
+    delegates[idx] = updated;
+    delegates.sort(function(a,b){return a.name.localeCompare(b.name);});
+    document.getElementById('edit-modal').classList.remove('open');
+    editingId = null;
+    renderDelegates();
+  });
 }
 
 // ── Boot ───────────────────────────────────────────
