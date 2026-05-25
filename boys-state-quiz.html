@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Boys State Quiz">
+<title>Boys State Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #13161c;
+  --surface2: #1c2029;
+  --border: rgba(255,255,255,0.08);
+  --accent: #4f8ef7;
+  --green: #34d399;
+  --red: #f87171;
+  --text: #f0f2f7;
+  --muted: #6b7280;
+  --muted2: #9ca3af;
+  --radius: 16px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+.app { display: flex; flex-direction: column; height: 100%; max-width: 480px; margin: 0 auto; width: 100%; }
+.screen { display: none; flex: 1; overflow-y: auto; padding: 20px 16px; padding-bottom: calc(80px + var(--safe-bottom)); }
+.screen.active { display: block; }
+
+.bottom-nav { display: flex; background: var(--surface); border-top: 1px solid var(--border); padding-bottom: var(--safe-bottom); flex-shrink: 0; z-index: 10; }
+.nav-btn { flex: 1; border: none; background: none; color: var(--muted); padding: 12px 4px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 0.3px; transition: color 0.15s; }
+.nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.active { color: var(--accent); }
+
+.syne { font-family: 'Syne', sans-serif; }
+h2 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 4px; }
+h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+
+.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.streak-pill { background: rgba(79,142,247,0.15); color: var(--accent); border: 1px solid rgba(79,142,247,0.3); border-radius: 20px; padding: 4px 12px; font-size: 13px; font-family: 'Syne', sans-serif; font-weight: 600; }
+.progress-track { height: 4px; background: var(--surface2); border-radius: 2px; margin-bottom: 20px; }
+.progress-bar { height: 4px; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+.photo-frame { width: 180px; height: 180px; border-radius: 90px; background: var(--surface2); border: 3px solid var(--border); margin: 0 auto 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+.photo-frame .no-photo { font-size: 72px; color: var(--muted); user-select: none; }
+.question-label { text-align: center; color: var(--muted2); font-size: 14px; margin-bottom: 6px; }
+.result-msg { text-align: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; min-height: 28px; margin-bottom: 14px; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.choice-btn { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 14px 10px; cursor: pointer; text-align: center; line-height: 1.3; transition: background 0.15s, border-color 0.15s, transform 0.1s; -webkit-user-select: none; }
+.choice-btn:active { transform: scale(0.96); }
+.choice-btn.correct { background: rgba(52,211,153,0.15); border-color: var(--green); color: var(--green); }
+.choice-btn.wrong { background: rgba(248,113,113,0.15); border-color: var(--red); color: var(--red); }
+.choice-btn.reveal { background: rgba(52,211,153,0.12); border-color: var(--green); color: var(--green); }
+.choice-btn:disabled { cursor: default; }
+.skip-btn { width: 100%; background: none; border: 1px solid var(--border); border-radius: 12px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px; cursor: pointer; margin-bottom: 8px; }
+.next-btn { width: 100%; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; padding: 14px; cursor: pointer; letter-spacing: 0.3px; transition: opacity 0.15s; }
+.next-btn:active { opacity: 0.85; }
+
+.empty-state { text-align: center; padding: 48px 20px; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { color: var(--muted2); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+.goto-btn { background: var(--accent); border: none; border-radius: 12px; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; padding: 12px 24px; cursor: pointer; }
+
+.screen-header { margin-bottom: 16px; }
+.delegate-count { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.delegate-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.delegate-item:last-child { border-bottom: none; }
+.mini-avatar { width: 44px; height: 44px; border-radius: 22px; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); }
+.mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.delegate-info { flex: 1; min-width: 0; }
+.delegate-name { font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.delegate-meta { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.del-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 8px; font-size: 18px; border-radius: 8px; }
+.del-btn:active { color: var(--red); }
+
+.upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; margin-bottom: 16px; transition: border-color 0.2s; }
+.upload-area:active { border-color: var(--accent); }
+.upload-area svg { width: 32px; height: 32px; stroke: var(--muted); margin-bottom: 8px; }
+.upload-area p { color: var(--muted2); font-size: 13px; }
+.preview-img { width: 100px; height: 100px; border-radius: 50px; object-fit: cover; display: block; margin: 0 auto 8px; border: 2px solid var(--accent); }
+.field-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; font-family: 'Syne', sans-serif; }
+.field { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 10px 12px; margin-bottom: 14px; outline: none; transition: border-color 0.15s; }
+.field:focus { border-color: var(--accent); }
+.field::placeholder { color: var(--muted); }
+.add-btn { width: 100%; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; padding: 14px; cursor: pointer; margin-top: 4px; transition: opacity 0.15s; }
+.add-btn:active { opacity: 0.85; }
+.msg { text-align: center; font-size: 13px; min-height: 20px; margin-top: 10px; }
+.msg.ok { color: var(--green); }
+.msg.err { color: var(--red); }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+.stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.hard-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.hard-row:last-child { border-bottom: none; }
+.pct-badge { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+.pct-bad { background: rgba(248,113,113,0.15); color: var(--red); }
+.pct-ok { background: rgba(52,211,153,0.15); color: var(--green); }
+.reset-btn { width: 100%; background: none; border: 1px solid rgba(248,113,113,0.3); border-radius: 12px; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px; cursor: pointer; margin-top: 12px; }
+
+.db-status { font-size: 12px; color: var(--muted); text-align: center; padding: 8px; }
+.db-status.err { color: var(--red); }
+
+@keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.pop { animation: popIn 0.2s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.shake { animation: shake 0.25s ease; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="screen active" id="screen-quiz"><div id="quiz-body"><div class="empty-state"><div class="empty-icon">⏳</div><p>Loading...</p></div></div></div>
+
+  <div class="screen" id="screen-delegates">
+    <div class="screen-header"><h2 class="syne">Delegates</h2><div class="delegate-count" id="del-count"></div></div>
+    <div class="card"><div id="delegate-list"></div></div>
+  </div>
+
+  <div class="screen" id="screen-add">
+    <div class="screen-header"><h2 class="syne">Add delegate</h2></div>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('photo-input').click()">
+      <svg id="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/><path d="M19 8h2m-1-1v2"/></svg>
+      <p id="upload-label">Tap to add photo</p>
+      <img id="photo-preview" class="preview-img" style="display:none" alt="Preview">
+    </div>
+    <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none">
+    <div class="field-label">Full name *</div>
+    <input class="field" id="add-name" type="text" placeholder="e.g. John Smith" autocomplete="off">
+    <div class="field-label">City / county</div>
+    <input class="field" id="add-city" type="text" placeholder="e.g. Conway" autocomplete="off">
+    <div class="field-label">Role / office</div>
+    <input class="field" id="add-role" type="text" placeholder="e.g. Governor" autocomplete="off">
+    <div class="field-label">Party</div>
+    <input class="field" id="add-party" type="text" placeholder="e.g. Federalist" autocomplete="off">
+    <button class="add-btn" onclick="addDelegate()">Add delegate</button>
+    <div class="msg" id="add-msg"></div>
+  </div>
+
+  <div class="screen" id="screen-stats">
+    <div class="screen-header"><h2 class="syne">Your stats</h2></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-label">Delegates</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-asked">0</div><div class="stat-label">Questions</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-correct">0</div><div class="stat-label">Correct</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-pct">—</div><div class="stat-label">Accuracy</div></div>
+    </div>
+    <div class="card">
+      <h3 class="syne" style="margin-bottom:12px">Hardest to remember</h3>
+      <div id="hard-list"></div>
+    </div>
+    <button class="reset-btn" onclick="resetStats()">Reset stats</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="quiz" onclick="showTab('quiz')">
+      <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 1 1 0 14A7 7 0 0 1 12 2z"/><path d="M12 22v-4"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 3-2.5 5"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+      Quiz
+    </button>
+    <button class="nav-btn" data-tab="delegates" onclick="showTab('delegates')">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      Delegates
+    </button>
+    <button class="nav-btn" data-tab="add" onclick="showTab('add')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      Add
+    </button>
+    <button class="nav-btn" data-tab="stats" onclick="showTab('stats')">
+      <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Stats
+    </button>
+  </nav>
+</div>
+
+<script>
+// ── IndexedDB setup ────────────────────────────────
+var DB_NAME = 'boys-state-26';
+var DB_VER = 1;
+var db = null;
+var delegates = [];
+var stats = { asked: 0, correct: 0, perPerson: {} };
+var currentQ = null;
+var answered = false;
+var streak = 0;
+var pendingPhoto = '';
+
+function openDB(cb) {
+  var req = indexedDB.open(DB_NAME, DB_VER);
+  req.onupgradeneeded = function(e) {
+    var d = e.target.result;
+    if (!d.objectStoreNames.contains('delegates')) {
+      d.createObjectStore('delegates', { keyPath: 'id' });
+    }
+    if (!d.objectStoreNames.contains('meta')) {
+      d.createObjectStore('meta', { keyPath: 'key' });
+    }
+  };
+  req.onsuccess = function(e) { db = e.target.result; cb(null); };
+  req.onerror = function(e) { cb(e.target.error); };
+}
+
+function txDelegates(mode) {
+  return db.transaction('delegates', mode).objectStore('delegates');
+}
+function txMeta(mode) {
+  return db.transaction('meta', mode).objectStore('meta');
+}
+
+function loadAll(cb) {
+  var req = txDelegates('readonly').getAll();
+  req.onsuccess = function(e) {
+    delegates = e.target.result || [];
+    delegates.sort(function(a,b){ return a.name.localeCompare(b.name); });
+    var req2 = txMeta('readonly').get('stats');
+    req2.onsuccess = function(e2) {
+      if (e2.target.result) {
+        stats = e2.target.result.value;
+        if (!stats.perPerson) stats.perPerson = {};
+      }
+      cb();
+    };
+    req2.onerror = function() { cb(); };
+  };
+  req.onerror = function() { delegates = []; cb(); };
+}
+
+function saveDelegate(d, cb) {
+  var req = txDelegates('readwrite').put(d);
+  req.onsuccess = function() { if (cb) cb(null); };
+  req.onerror = function(e) { if (cb) cb(e.target.error); };
+}
+
+function deleteFromDB(id, cb) {
+  var req = txDelegates('readwrite').delete(id);
+  req.onsuccess = function() { if (cb) cb(null); };
+  req.onerror = function(e) { if (cb) cb(e.target.error); };
+}
+
+function saveStats() {
+  txMeta('readwrite').put({ key: 'stats', value: stats });
+}
+
+// ── Navigation ─────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+  if (tab === 'quiz') renderQuiz();
+  if (tab === 'delegates') renderDelegates();
+  if (tab === 'stats') renderStats();
+}
+
+// ── Quiz ───────────────────────────────────────────
+function renderQuiz() {
+  var el = document.getElementById('quiz-body');
+  if (delegates.length < 2) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏛️</div>' +
+      '<h2 class="syne" style="margin-bottom:8px">Arkansas Boys State 2026</h2>' +
+      '<p>Add at least 2 delegates to start drilling names and faces.</p>' +
+      '<button class="goto-btn" onclick="showTab(\'add\')">Add delegates</button></div>';
+    return;
+  }
+  generateQuestion();
+}
+
+function generateQuestion() {
+  answered = false;
+  var pool = delegates.slice();
+  var weights = pool.map(function(d) {
+    var p = stats.perPerson[d.id];
+    if (!p || p.asked === 0) return 3;
+    var pct = p.correct / p.asked;
+    return pct < 0.5 ? 4 : pct < 0.75 ? 2 : 1;
+  });
+  var total = weights.reduce(function(a,b){return a+b;},0);
+  var r = Math.random() * total, cum = 0, idx = 0;
+  for (var i = 0; i < weights.length; i++) { cum += weights[i]; if (r <= cum) { idx = i; break; } }
+  var correct = pool[idx];
+  var wrong = shuffle(pool.filter(function(d){return d.id!==correct.id;})).slice(0,3);
+  var choices = shuffle(wrong.concat([correct]));
+  currentQ = { correct: correct, choices: choices };
+  renderQuestion();
+}
+
+function renderQuestion() {
+  var q = currentQ;
+  var el = document.getElementById('quiz-body');
+  var photoHTML = q.correct.photo
+    ? '<img src="' + q.correct.photo + '" alt="Delegate photo">'
+    : '<span class="no-photo">👤</span>';
+  var choicesHTML = q.choices.map(function(c) {
+    return '<button class="choice-btn" id="btn-' + c.id + '" onclick="answer(\'' + c.id + '\')">' + esc(c.name) + '</button>';
+  }).join('');
+  var pct = stats.asked > 0 ? Math.min(100, Math.round(stats.correct / stats.asked * 100)) : 0;
+  el.innerHTML =
+    '<div class="quiz-header">' +
+      '<div class="syne" style="font-weight:700;font-size:15px;color:var(--muted2)">' +
+        (stats.asked > 0 ? stats.asked + ' asked' : 'Ready?') + '</div>' +
+      '<div class="streak-pill">' +
+        (streak > 1 ? '🔥 ' + streak + ' streak' : streak === 1 ? '✓ 1' : 'Start') + '</div>' +
+    '</div>' +
+    '<div class="progress-track"><div class="progress-bar" style="width:' + pct + '%"></div></div>' +
+    '<div class="photo-frame pop">' + photoHTML + '</div>' +
+    '<div class="question-label">Who is this?</div>' +
+    '<div class="result-msg" id="result-msg"></div>' +
+    '<div class="choices pop">' + choicesHTML + '</div>' +
+    '<button class="skip-btn" onclick="generateQuestion()">Skip</button>';
+}
+
+function answer(id) {
+  if (answered) return;
+  answered = true;
+  var q = currentQ;
+  var isCorrect = id === q.correct.id;
+  stats.asked++;
+  if (!stats.perPerson[q.correct.id]) stats.perPerson[q.correct.id] = { asked: 0, correct: 0 };
+  stats.perPerson[q.correct.id].asked++;
+  if (isCorrect) { stats.correct++; stats.perPerson[q.correct.id].correct++; streak++; }
+  else { streak = 0; }
+  saveStats();
+  q.choices.forEach(function(c) {
+    var btn = document.getElementById('btn-' + c.id);
+    if (!btn) return;
+    btn.disabled = true;
+    if (c.id === q.correct.id) btn.classList.add('reveal');
+    else if (c.id === id) btn.classList.add('wrong');
+  });
+  var msg = document.getElementById('result-msg');
+  if (isCorrect) {
+    msg.style.color = 'var(--green)';
+    msg.textContent = streak > 2 ? '🔥 Correct!' : 'Correct!';
+  } else {
+    msg.style.color = 'var(--red)';
+    var ans = delegates.find(function(d){return d.id===q.correct.id;});
+    msg.textContent = "That's " + ans.name;
+    document.querySelector('.choices').classList.add('shake');
+  }
+  var nb = document.createElement('button');
+  nb.className = 'next-btn'; nb.textContent = 'Next →'; nb.onclick = generateQuestion;
+  document.getElementById('quiz-body').appendChild(nb);
+}
+
+// ── Delegates ──────────────────────────────────────
+function renderDelegates() {
+  var el = document.getElementById('delegate-list');
+  document.getElementById('del-count').textContent = delegates.length + ' delegate' + (delegates.length !== 1 ? 's' : '');
+  if (delegates.length === 0) {
+    el.innerHTML = '<div class="empty-state" style="padding:24px 0"><p>No delegates yet.</p></div>';
+    return;
+  }
+  el.innerHTML = delegates.map(function(d) {
+    var av = d.photo ? '<img src="' + d.photo + '" alt="">' : '👤';
+    var meta = [d.city, d.role, d.party].filter(Boolean).join(' · ');
+    return '<div class="delegate-item">' +
+      '<div class="mini-avatar">' + av + '</div>' +
+      '<div class="delegate-info">' +
+        '<div class="delegate-name">' + esc(d.name) + '</div>' +
+        (meta ? '<div class="delegate-meta">' + esc(meta) + '</div>' : '') +
+      '</div>' +
+      '<button class="del-btn" onclick="removeDelegate(\'' + d.id + '\')" aria-label="Delete">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function removeDelegate(id) {
+  if (!confirm('Remove this delegate?')) return;
+  deleteFromDB(id, function() {
+    delegates = delegates.filter(function(d){return d.id!==id;});
+    delete stats.perPerson[id];
+    saveStats();
+    renderDelegates();
+  });
+}
+
+// ── Add ────────────────────────────────────────────
+document.getElementById('photo-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image();
+    img.onload = function() {
+      var max = 500;
+      var w = img.width, h = img.height;
+      if (w > max || h > max) { var sc = Math.min(max/w, max/h); w = Math.round(w*sc); h = Math.round(h*sc); }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      pendingPhoto = canvas.toDataURL('image/jpeg', 0.82);
+      var prev = document.getElementById('photo-preview');
+      prev.src = pendingPhoto; prev.style.display = 'block';
+      document.getElementById('upload-icon').style.display = 'none';
+      document.getElementById('upload-label').textContent = 'Tap to change photo';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function addDelegate() {
+  var name = document.getElementById('add-name').value.trim();
+  var msg = document.getElementById('add-msg');
+  if (!name) { msg.className = 'msg err'; msg.textContent = 'Name is required.'; return; }
+  var d = {
+    id: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+    name: name,
+    city: document.getElementById('add-city').value.trim(),
+    role: document.getElementById('add-role').value.trim(),
+    party: document.getElementById('add-party').value.trim(),
+    photo: pendingPhoto
+  };
+  saveDelegate(d, function(err) {
+    if (err) { msg.className = 'msg err'; msg.textContent = 'Error saving. Try again.'; return; }
+    delegates.push(d);
+    delegates.sort(function(a,b){return a.name.localeCompare(b.name);});
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-city').value = '';
+    document.getElementById('add-role').value = '';
+    document.getElementById('add-party').value = '';
+    var prev = document.getElementById('photo-preview');
+    prev.style.display = 'none'; prev.src = '';
+    document.getElementById('photo-input').value = '';
+    document.getElementById('upload-icon').style.display = '';
+    document.getElementById('upload-label').textContent = 'Tap to add photo';
+    pendingPhoto = '';
+    msg.className = 'msg ok'; msg.textContent = '✓ ' + name + ' added!';
+    setTimeout(function(){ msg.textContent = ''; }, 2500);
+  });
+}
+
+// ── Stats ──────────────────────────────────────────
+function renderStats() {
+  document.getElementById('s-total').textContent = delegates.length;
+  document.getElementById('s-asked').textContent = stats.asked;
+  document.getElementById('s-correct').textContent = stats.correct;
+  document.getElementById('s-pct').textContent = stats.asked > 0 ? Math.round(stats.correct/stats.asked*100)+'%' : '—';
+  var hard = delegates.map(function(d) {
+    var p = stats.perPerson[d.id];
+    if (!p || p.asked < 2) return null;
+    return { name: d.name, pct: Math.round(p.correct/p.asked*100) };
+  }).filter(Boolean).sort(function(a,b){return a.pct-b.pct;}).slice(0,6);
+  var hl = document.getElementById('hard-list');
+  if (hard.length === 0) {
+    hl.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Answer a few questions to see your trouble spots.</div>';
+  } else {
+    hl.innerHTML = hard.map(function(h) {
+      return '<div class="hard-row"><span style="font-size:14px">' + esc(h.name) + '</span>' +
+        '<span class="pct-badge ' + (h.pct>=70?'pct-ok':'pct-bad') + '">' + h.pct + '%</span></div>';
+    }).join('');
+  }
+}
+
+function resetStats() {
+  if (!confirm('Reset all quiz stats?')) return;
+  stats = { asked: 0, correct: 0, perPerson: {} };
+  streak = 0;
+  saveStats();
+  renderStats();
+}
+
+// ── Utilities ──────────────────────────────────────
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length-1; i>0; i--) { var j = Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ───────────────────────────────────────────
+openDB(function(err) {
+  if (err) {
+    document.getElementById('quiz-body').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠️</div>' +
+      '<p style="color:var(--red)">Could not open storage. Try opening in Safari.</p></div>';
+    return;
+  }
+  loadAll(function() { renderQuiz(); });
+});
+</script>
+</body>
+</html>
